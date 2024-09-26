@@ -1,49 +1,56 @@
+import streamlit as st
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
 
-# 生成样本数据
-np.random.seed(0)
-X = np.random.rand(100, 1)
-y = 2 + 3 * X + np.random.randn(100, 1) * 0.1
+def generate_data(n_samples, noise):
+    np.random.seed(0)
+    X = np.random.rand(n_samples, 1)
+    y = 2 + 3 * X + np.random.randn(n_samples, 1) * noise
+    return X, y
 
-# 分割训练集和测试集
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+def run_linear_regression(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    
+    y_pred = model.predict(X_test)
+    
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    return model, mse, r2, X_train, X_test, y_train, y_test
 
-# 创建并训练模型
-model = LinearRegression()
-model.fit(X_train, y_train)
+def plot_regression(X, y, model):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(X, y, color='blue', alpha=0.5, label='數據點')
+    ax.plot(X, model.predict(X), color='red', label='回歸線')
+    ax.set_xlabel('X')
+    ax.set_ylabel('y')
+    ax.set_title('線性回歸：散點圖和回歸線')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    return fig
 
-# 在测试集上进行预测
-y_pred = model.predict(X_test)
+st.title('線性回歸可視化應用')
 
-# 评估模型
-mse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
+n_samples = st.slider('選擇樣本數量', min_value=10, max_value=1000, value=100, step=10)
+noise = st.slider('選擇噪音水平', min_value=0.0, max_value=1.0, value=0.1, step=0.05)
 
-print(f"截距: {model.intercept_[0]:.4f}")
-print(f"斜率: {model.coef_[0][0]:.4f}")
-print(f"均方误差: {mse:.4f}")
-print(f"R²分数: {r2:.4f}")
+X, y = generate_data(n_samples, noise)
+model, mse, r2, X_train, X_test, y_train, y_test = run_linear_regression(X, y)
 
-# 使用模型进行预测
-new_X = np.array([[0.5]])
-predicted_y = model.predict(new_X)
-print(f"对X=0.5的预测值: {predicted_y[0][0]:.4f}")
+st.write(f"截距: {model.intercept_[0]:.4f}")
+st.write(f"斜率: {model.coef_[0][0]:.4f}")
+st.write(f"均方誤差: {mse:.4f}")
+st.write(f"R²分數: {r2:.4f}")
 
-# 创建散点图和回归线
-plt.figure(figsize=(10, 6))
-plt.scatter(X, y, color='blue', alpha=0.5, label='数据点')
-plt.plot(X, model.predict(X), color='red', label='回归线')
-plt.xlabel('X')
-plt.ylabel('y')
-plt.title('线性回归：散点图和回归线')
-plt.legend()
+fig = plot_regression(X, y, model)
+st.pyplot(fig)
 
-# 添加网格线以便更好地查看
-plt.grid(True, linestyle='--', alpha=0.7)
-
-# 显示图形
-plt.show()
+new_x = st.number_input('輸入一個X值進行預測', value=0.5)
+predicted_y = model.predict([[new_x]])[0][0]
+st.write(f"對X={new_x}的預測值: {predicted_y:.4f}")
