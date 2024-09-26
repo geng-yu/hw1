@@ -1,44 +1,118 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
-# 設置頁面標題
-st.set_page_config(page_title="線性迴歸演示")
-st.title("線性迴歸演示")
+# 顯示標題
+st.title('線性迴歸示例')
 
-# 創建側邊欄用於參數調整
-st.sidebar.header("參數調整")
-num_points = st.sidebar.slider("數據點數量", 10, 200, 100)
-noise_level = st.sidebar.slider("噪聲級別", 0.0, 2.0, 0.5)
-slope = st.sidebar.slider("斜率", -5.0, 5.0, 1.0)
-intercept = st.sidebar.slider("截距", -10.0, 10.0, 0.0)
+# 創建模擬數據
+np.random.seed(0)
+n_samples = 100
+X = np.random.rand(n_samples, 1) * 10
+y = 2.5 * X + np.random.randn(n_samples, 1) * 2
 
-# 生成數據
-X = np.linspace(0, 10, num_points).reshape(-1, 1)
-y = slope * X.ravel() + intercept + np.random.normal(0, noise_level, num_points)
+# 拖動滑桿來設置測試集比例
+test_size = st.slider('測試集比例', 0.1, 0.9, 0.2)
 
-# 進行線性迴歸
+# 分割數據為訓練集與測試集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+# 訓練線性迴歸模型
 model = LinearRegression()
-model.fit(X, y)
+model.fit(X_train, y_train)
 
-# 繪製圖表
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.scatter(X, y, color='blue', alpha=0.5)
-ax.plot(X, model.predict(X), color='red', linewidth=2)
+# 預測
+y_pred = model.predict(X_test)
+
+# 顯示點陣圖和迴歸線
+fig, ax = plt.subplots()
+ax.scatter(X_test, y_test, color='blue', label='測試數據')
+ax.plot(X_test, y_pred, color='red', label='迴歸線')
 ax.set_xlabel('X')
-ax.set_ylabel('Y')
+ax.set_ylabel('y')
 ax.set_title('線性迴歸')
 
-# 在Streamlit中顯示圖表
 st.pyplot(fig)
 
-# 顯示迴歸結果
-st.write(f"擬合的斜率: {model.coef_[0]:.2f}")
-st.write(f"擬合的截距: {model.intercept_:.2f}")
+# 顯示迴歸模型的係數與截距
+st.write(f'迴歸係數: {model.coef_[0][0]:.2f}')
+st.write(f'截距: {model.intercept_[0]:.2f}')
 
-# 添加對話記錄部分
-st.header("對話記錄")
+# 顯示你和我的對話記錄
+with st.expander('點擊查看完整對話記錄'):
+    conversation = '''
+    你：使用python做出線性迴歸，顯示點陣圖+中心線，使用streamlit做出網頁，參數使用拖拉式調整(參數設置在圖表上方)，網頁下方顯示我跟你的對話(程式不省略，使用下拉式隱藏or展開)
+    ChatGPT：這裡是一個簡單的 Python 示例，使用 Streamlit 來展示線性迴歸圖表，其中包含散點圖、迴歸中心線、拖拉式調整參數的功能，以及網頁下方顯示你與我的對話。...
+    '''
+    st.write(conversation)
 
-conversation = """
-Human: 使用python做出線性迴歸，顯示點陣圖+中心線，使用streamlit做出網頁，參數使用拖拉式調整(參數設置在圖表上方)，網頁下方顯示我跟你的對話(程式不省略，使用下拉式隱藏or展開)
+# 提供完整程式碼展開/隱藏功能
+with st.expander('點擊查看完整程式碼'):
+    code = '''
+    import streamlit as st
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import train_test_split
+
+    # 顯示標題
+    st.title('線性迴歸示例')
+
+    # 創建模擬數據
+    np.random.seed(0)
+    n_samples = 100
+    X = np.random.rand(n_samples, 1) * 10
+    y = 2.5 * X + np.random.randn(n_samples, 1) * 2
+
+    # 拖動滑桿來設置測試集比例
+    test_size = st.slider('測試集比例', 0.1, 0.9, 0.2)
+
+    # 分割數據為訓練集與測試集
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+    # 訓練線性迴歸模型
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # 預測
+    y_pred = model.predict(X_test)
+
+    # 顯示點陣圖和迴歸線
+    fig, ax = plt.subplots()
+    ax.scatter(X_test, y_test, color='blue', label='測試數據')
+    ax.plot(X_test, y_pred, color='red', label='迴歸線')
+    ax.set_xlabel('X')
+    ax.set_ylabel('y')
+    ax.set_title('線性迴歸')
+
+    st.pyplot(fig)
+
+    # 顯示迴歸模型的係數與截距
+    st.write(f'迴歸係數: {model.coef_[0][0]:.2f}')
+    st.write(f'截距: {model.intercept_[0]:.2f}')
+
+    # 顯示你和我的對話記錄
+    with st.expander('點擊查看完整對話記錄'):
+        conversation = '''
+        你：使用python做出線性迴歸，顯示點陣圖+中心線，使用streamlit做出網頁，參數使用拖拉式調整(參數設置在圖表上方)，網頁下方顯示我跟你的對話(程式不省略，使用下拉式隱藏or展開)
+        ChatGPT：這裡是一個簡單的 Python 示例，使用 Streamlit 來展示線性迴歸圖表，其中包含散點圖、迴歸中心線、拖拉式調整參數的功能，以及網頁下方顯示你與我的對話。...
+        '''
+        st.write(conversation)
+
+    # 提供完整程式碼展開/隱藏功能
+    with st.expander('點擊查看完整程式碼'):
+        code = '''
+        import streamlit as st
+        import numpy as np
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from sklearn.linear_model import LinearRegression
+        from sklearn.model_selection import train_test_split
+        '''
+        st.code(code)
+    '''
+    st.code(code)
