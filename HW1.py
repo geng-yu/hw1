@@ -8,7 +8,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 # 设置页面配置
 st.set_page_config(layout="wide", page_title="线性回归可视化")
 
-# 自定义CSS
+# 自定义 CSS
 st.markdown("""
 <style>
     .reportview-container {
@@ -21,18 +21,20 @@ st.markdown("""
     .stSlider > div > div > div > div {
         background-color: #4CAF50;
     }
-    .user-history {
+    .question-answer {
         background-color: #e1e1e1;
         padding: 10px;
         border-radius: 5px;
         margin-top: 20px;
     }
+    .code-block {
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
-
-# 初始化会话状态变量
-if 'history' not in st.session_state:
-    st.session_state.history = []
 
 def generate_data(n_samples, noise, slope, intercept):
     np.random.seed(0)
@@ -80,11 +82,6 @@ with col3:
 
 intercept = st.slider('选择截距', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
 
-# 记录用户操作
-current_settings = f"样本数: {n_samples}, 噪音: {noise:.2f}, 斜率: {slope:.2f}, 截距: {intercept:.2f}"
-if current_settings not in st.session_state.history:
-    st.session_state.history.append(current_settings)
-
 X, y = generate_data(n_samples, noise, slope, intercept)
 model, mse, r2, X_train, X_test, y_train, y_test = run_linear_regression(X, y)
 
@@ -116,58 +113,63 @@ new_x = st.number_input('输入一个X值进行预测', value=0.5)
 predicted_y = model.predict([[new_x]])[0][0]
 st.write(f"对X={new_x}的预测值: {predicted_y:.4f}")
 
-# 记录预测操作
-st.session_state.history.append(f"预测: X={new_x:.2f}, Y={predicted_y:.4f}")
+# 问答部分
+st.header('❓ 问答部分')
+st.markdown('<div class="question-answer">', unsafe_allow_html=True)
+st.markdown("**问题1：**")
+st.write("使用PYTHON 写出 solve linear regression problem")
+st.markdown("**回答1：**")
+st.write("好的，我可以为您展示如何使用Python解决线性回归问题。我们将使用NumPy和scikit-learn库来实现这个任务。")
 
-# 添加说明
-st.sidebar.header('📘 使用说明')
-st.sidebar.write("""
-1. 使用滑块调整样本数量、噪音水平、斜率和截距。
-2. 观察这些变化如何影响线性回归模型和图表。
-3. 在预测部分输入X值，查看模型的预测结果。
-""")
+code = """
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
 
-# 显示用户交互历史
-st.header('👥 用户交互历史')
-st.markdown('<div class="user-history">', unsafe_allow_html=True)
-for i, action in enumerate(st.session_state.history, 1):
-    st.write(f"{i}. {action}")
+# 生成样本数据
+np.random.seed(0)
+X = np.random.rand(100, 1)
+y = 2 + 3 * X + np.random.randn(100, 1) * 0.1
+
+# 分割训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 创建并训练模型
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# 在测试集上进行预测
+y_pred = model.predict(X_test)
+
+# 评估模型
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"截距: {model.intercept_[0]:.4f}")
+print(f"斜率: {model.coef_[0][0]:.4f}")
+print(f"均方误差: {mse:.4f}")
+print(f"R²分数: {r2:.4f}")
+
+# 使用模型进行预测
+new_X = np.array([[0.5]])
+predicted_y = model.predict(new_X)
+print(f"对X=0.5的预测值: {predicted_y[0][0]:.4f}")
+"""
+
+if st.button('显示/隐藏代码'):
+    st.code(code, language='python')
+
+st.write("这段代码展示了如何使用Python和scikit-learn库来解决线性回归问题。以下是代码的主要步骤:")
+st.write("1. 导入必要的库")
+st.write("2. 生成样本数据")
+st.write("3. 将数据分割为训练集和测试集")
+st.write("4. 创建并训练线性回归模型")
+st.write("5. 使用模型进行预测")
+st.write("6. 评估模型性能")
+st.write("7. 使用训练好的模型进行新的预测")
+st.write("这个例子使用了简单的一元线性回归，但相同的方法可以扩展到多元线性回归。")
+st.write("您需要安装NumPy和scikit-learn库才能运行这段代码。如果您还没有安装，可以使用以下命令安装:")
+st.code("pip install numpy scikit-learn", language='bash')
+
 st.markdown('</div>', unsafe_allow_html=True)
-
-# 添加"如何将代码推送到GitHub"的说明
-st.header('🚀 如何将代码推送到GitHub')
-st.markdown("""
-1. **创建GitHub账户**：如果还没有，在 [GitHub](https://github.com/) 上注册一个账户。
-
-2. **安装Git**：从 [Git官网](https://git-scm.com/downloads) 下载并安装Git。
-
-3. **配置Git**：打开终端，运行以下命令：
-   ```
-   git config --global user.name "您的名字"
-   git config --global user.email "您的邮箱"
-   ```
-
-4. **创建新的GitHub仓库**：
-   - 登录GitHub
-   - 点击右上角的 "+" 图标，选择 "New repository"
-   - 填写仓库名称，选择 "Public"
-   - 点击 "Create repository"
-
-5. **初始化本地Git仓库**：
-   - 打开终端，进入您的项目文件夹
-   - 运行 `git init`
-
-6. **添加文件到Git**：
-   - 运行 `git add .` 添加所有文件
-
-7. **提交更改**：
-   - 运行 `git commit -m "Initial commit"`
-
-8. **链接到GitHub仓库**：
-   - 运行 `git remote add origin https://github.com/您的用户名/您的仓库名.git`
-
-9. **推送代码到GitHub**：
-   - 运行 `git push -u origin main`
-
-现在您的代码应该已经成功推送到GitHub上了！
-""")
