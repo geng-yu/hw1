@@ -5,10 +5,29 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-def generate_data(n_samples, noise):
+# 設置頁面配置
+st.set_page_config(layout="wide", page_title="線性回歸可視化")
+
+# 自定義CSS
+st.markdown("""
+<style>
+    .reportview-container {
+        background: #f0f2f6
+    }
+    .big-font {
+        font-size:20px !important;
+        font-weight: bold;
+    }
+    .stSlider > div > div > div > div {
+        background-color: #4CAF50;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def generate_data(n_samples, noise, slope, intercept):
     np.random.seed(0)
     X = np.random.rand(n_samples, 1)
-    y = 2 + 3 * X + np.random.randn(n_samples, 1) * noise
+    y = intercept + slope * X + np.random.randn(n_samples, 1) * noise
     return X, y
 
 def run_linear_regression(X, y):
@@ -35,22 +54,49 @@ def plot_regression(X, y, model):
     ax.grid(True, linestyle='--', alpha=0.7)
     return fig
 
-st.title('線性回歸可視化應用')
+st.title('📊 互動式線性回歸可視化')
 
-n_samples = st.slider('選擇樣本數量', min_value=10, max_value=1000, value=100, step=10)
-noise = st.slider('選擇噪音水平', min_value=0.0, max_value=1.0, value=0.1, step=0.05)
+# 使用 columns 來創建並排的滑塊
+col1, col2, col3 = st.columns(3)
 
-X, y = generate_data(n_samples, noise)
+with col1:
+    n_samples = st.slider('選擇樣本數量', min_value=10, max_value=1000, value=100, step=10)
+
+with col2:
+    noise = st.slider('選擇噪音水平', min_value=0.0, max_value=1.0, value=0.1, step=0.05)
+
+with col3:
+    slope = st.slider('選擇斜率', min_value=-5.0, max_value=5.0, value=3.0, step=0.1)
+
+intercept = st.slider('選擇截距', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
+
+X, y = generate_data(n_samples, noise, slope, intercept)
 model, mse, r2, X_train, X_test, y_train, y_test = run_linear_regression(X, y)
 
-st.write(f"截距: {model.intercept_[0]:.4f}")
-st.write(f"斜率: {model.coef_[0][0]:.4f}")
-st.write(f"均方誤差: {mse:.4f}")
-st.write(f"R²分數: {r2:.4f}")
+# 使用 columns 來創建並排的指標
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.markdown('<p class="big-font">截距</p>', unsafe_allow_html=True)
+    st.write(f"{model.intercept_[0]:.4f}")
+
+with col2:
+    st.markdown('<p class="big-font">斜率</p>', unsafe_allow_html=True)
+    st.write(f"{model.coef_[0][0]:.4f}")
+
+with col3:
+    st.markdown('<p class="big-font">均方誤差</p>', unsafe_allow_html=True)
+    st.write(f"{mse:.4f}")
+
+with col4:
+    st.markdown('<p class="big-font">R²分數</p>', unsafe_allow_html=True)
+    st.write(f"{r2:.4f}")
 
 fig = plot_regression(X, y, model)
 st.pyplot(fig)
 
+# 添加一個預測部分
+st.subheader('🔮 預測')
 new_x = st.number_input('輸入一個X值進行預測', value=0.5)
 predicted_y = model.predict([[new_x]])[0][0]
 st.write(f"對X={new_x}的預測值: {predicted_y:.4f}")
