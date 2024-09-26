@@ -5,10 +5,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-# 設置頁面配置
-st.set_page_config(layout="wide", page_title="線性回歸可視化")
+# 设置页面配置
+st.set_page_config(layout="wide", page_title="线性回归可视化")
 
-# 自定義CSS
+# 自定义CSS
 st.markdown("""
 <style>
     .reportview-container {
@@ -21,8 +21,18 @@ st.markdown("""
     .stSlider > div > div > div > div {
         background-color: #4CAF50;
     }
+    .user-history {
+        background-color: #e1e1e1;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# 初始化会话状态变量
+if 'history' not in st.session_state:
+    st.session_state.history = []
 
 def generate_data(n_samples, noise, slope, intercept):
     np.random.seed(0)
@@ -45,35 +55,40 @@ def run_linear_regression(X, y):
 
 def plot_regression(X, y, model):
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(X, y, color='blue', alpha=0.5, label='數據點')
-    ax.plot(X, model.predict(X), color='red', label='回歸線')
+    ax.scatter(X, y, color='blue', alpha=0.5, label='数据点')
+    ax.plot(X, model.predict(X), color='red', label='回归线')
     ax.set_xlabel('X')
     ax.set_ylabel('y')
-    ax.set_title('線性回歸：散點圖和回歸線')
+    ax.set_title('线性回归：散点图和回归线')
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.7)
     return fig
 
-st.title('📊 互動式線性回歸可視化')
+st.title('📊 互动式线性回归可视化')
 
-# 使用 columns 來創建並排的滑塊
+# 使用 columns 来创建并排的滑块
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    n_samples = st.slider('選擇樣本數量', min_value=10, max_value=1000, value=100, step=10)
+    n_samples = st.slider('选择样本数量', min_value=10, max_value=1000, value=100, step=10)
 
 with col2:
-    noise = st.slider('選擇噪音水平', min_value=0.0, max_value=1.0, value=0.1, step=0.05)
+    noise = st.slider('选择噪音水平', min_value=0.0, max_value=1.0, value=0.1, step=0.05)
 
 with col3:
-    slope = st.slider('選擇斜率', min_value=-5.0, max_value=5.0, value=3.0, step=0.1)
+    slope = st.slider('选择斜率', min_value=-5.0, max_value=5.0, value=3.0, step=0.1)
 
-intercept = st.slider('選擇截距', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
+intercept = st.slider('选择截距', min_value=-5.0, max_value=5.0, value=2.0, step=0.1)
+
+# 记录用户操作
+current_settings = f"样本数: {n_samples}, 噪音: {noise:.2f}, 斜率: {slope:.2f}, 截距: {intercept:.2f}"
+if current_settings not in st.session_state.history:
+    st.session_state.history.append(current_settings)
 
 X, y = generate_data(n_samples, noise, slope, intercept)
 model, mse, r2, X_train, X_test, y_train, y_test = run_linear_regression(X, y)
 
-# 使用 columns 來創建並排的指標
+# 使用 columns 来创建并排的指标
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -85,26 +100,74 @@ with col2:
     st.write(f"{model.coef_[0][0]:.4f}")
 
 with col3:
-    st.markdown('<p class="big-font">均方誤差</p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">均方误差</p>', unsafe_allow_html=True)
     st.write(f"{mse:.4f}")
 
 with col4:
-    st.markdown('<p class="big-font">R²分數</p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">R²分数</p>', unsafe_allow_html=True)
     st.write(f"{r2:.4f}")
 
 fig = plot_regression(X, y, model)
 st.pyplot(fig)
 
-# 添加一個預測部分
-st.subheader('🔮 預測')
-new_x = st.number_input('輸入一個X值進行預測', value=0.5)
+# 添加一个预测部分
+st.subheader('🔮 预测')
+new_x = st.number_input('输入一个X值进行预测', value=0.5)
 predicted_y = model.predict([[new_x]])[0][0]
-st.write(f"對X={new_x}的預測值: {predicted_y:.4f}")
+st.write(f"对X={new_x}的预测值: {predicted_y:.4f}")
 
-# 添加說明
-st.sidebar.header('📘 使用說明')
+# 记录预测操作
+st.session_state.history.append(f"预测: X={new_x:.2f}, Y={predicted_y:.4f}")
+
+# 添加说明
+st.sidebar.header('📘 使用说明')
 st.sidebar.write("""
-1. 使用滑塊調整樣本數量、噪音水平、斜率和截距。
-2. 觀察這些變化如何影響線性回歸模型和圖表。
-3. 在預測部分輸入X值，查看模型的預測結果。
+1. 使用滑块调整样本数量、噪音水平、斜率和截距。
+2. 观察这些变化如何影响线性回归模型和图表。
+3. 在预测部分输入X值，查看模型的预测结果。
+""")
+
+# 显示用户交互历史
+st.header('👥 用户交互历史')
+st.markdown('<div class="user-history">', unsafe_allow_html=True)
+for i, action in enumerate(st.session_state.history, 1):
+    st.write(f"{i}. {action}")
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 添加"如何将代码推送到GitHub"的说明
+st.header('🚀 如何将代码推送到GitHub')
+st.markdown("""
+1. **创建GitHub账户**：如果还没有，在 [GitHub](https://github.com/) 上注册一个账户。
+
+2. **安装Git**：从 [Git官网](https://git-scm.com/downloads) 下载并安装Git。
+
+3. **配置Git**：打开终端，运行以下命令：
+   ```
+   git config --global user.name "您的名字"
+   git config --global user.email "您的邮箱"
+   ```
+
+4. **创建新的GitHub仓库**：
+   - 登录GitHub
+   - 点击右上角的 "+" 图标，选择 "New repository"
+   - 填写仓库名称，选择 "Public"
+   - 点击 "Create repository"
+
+5. **初始化本地Git仓库**：
+   - 打开终端，进入您的项目文件夹
+   - 运行 `git init`
+
+6. **添加文件到Git**：
+   - 运行 `git add .` 添加所有文件
+
+7. **提交更改**：
+   - 运行 `git commit -m "Initial commit"`
+
+8. **链接到GitHub仓库**：
+   - 运行 `git remote add origin https://github.com/您的用户名/您的仓库名.git`
+
+9. **推送代码到GitHub**：
+   - 运行 `git push -u origin main`
+
+现在您的代码应该已经成功推送到GitHub上了！
 """)
