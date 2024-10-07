@@ -2,41 +2,33 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
-# 設定標題
-st.title('線性迴歸展示')
+# 定義更新函數
+def update_model(noise_level, slope, num_samples):
+    np.random.seed(0)
+    X = 2 * np.random.rand(num_samples, 1)
+    y = 4 + slope * X + noise_level * np.random.randn(num_samples, 1)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    plt.scatter(X_test, y_test, color='black', label='Actual data')
+    plt.plot(X_test, y_pred, color='blue', linewidth=2, label='Predicted line')
+    plt.xlabel('X')
+    plt.ylabel('y')
+    plt.legend()
+    st.pyplot(plt.gcf())
+    
+    st.write(f"Slope: {model.coef_[0][0]}")
+    st.write(f"Intercept: {model.intercept_[0]}")
 
-# 創建隨機數據點
-n_points = st.slider('選擇數據點數量', 10, 200, 50)
-np.random.seed(42)
-X = 2 * np.random.rand(n_points, 1)
-y = 4 + 3 * X + np.random.randn(n_points, 1)
+# 創建滑桿
+noise_level = st.slider('Noise Level', 0.0, 5.0, 1.0)
+slope = st.slider('Slope', 0.0, 10.0, 3.0)
+num_samples = st.slider('Num Samples', 10, 500, 100)
 
-# 使用線性迴歸模型
-lin_reg = LinearRegression()
-lin_reg.fit(X, y)
-y_pred = lin_reg.predict(X)
-
-# 顯示斜率和截距
-st.write(f"模型斜率: {lin_reg.coef_[0][0]:.2f}")
-st.write(f"模型截距: {lin_reg.intercept_[0]:.2f}")
-
-# 設置調整噪聲強度的滑桿
-noise_level = st.slider('調整噪聲強度', 0.0, 10.0, 1.0)
-
-# 根據噪聲強度重新生成數據
-y = 4 + 3 * X + noise_level * np.random.randn(n_points, 1)
-y_pred = lin_reg.predict(X)
-
-# 繪製點陣圖與線性迴歸線
-plt.figure(figsize=(10, 6))
-plt.scatter(X, y, color='blue', label='數據點')
-plt.plot(X, y_pred, color='red', label='回歸線')
-plt.xlabel('X')
-plt.ylabel('y')
-plt.title('線性迴歸模型')
-plt.legend()
-
-# 在Streamlit上顯示圖表
-st.pyplot(plt)
-
+update_model(noise_level, slope, num_samples)
