@@ -1,108 +1,61 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.animation as animation
-import io
 
-# 设置页面标题
-st.set_page_config(page_title="线性回归模型演示", layout="wide")
-st.title("线性回归模型演示")
+def generate_data(n_samples, noise_level, a, b):
+    """生成帶有噪聲的線性數據"""
+    x = np.linspace(0, 10, n_samples)
+    y = a * x + b + np.random.normal(0, noise_level, n_samples)
+    return x, y
 
-# 生成随机数据
-@st.cache_data
-def generate_data(n_samples, noise):
-    X = np.linspace(0, 10, n_samples).reshape(-1, 1)
-    y = 2 * X + 1 + np.random.normal(0, noise, (n_samples, 1))
-    return X, y
+def linear_regression(x, y):
+    """執行線性回歸"""
+    n = len(x)
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(x * y)
+    sum_xx = np.sum(x * x)
+    
+    a = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x)
+    b = (sum_y - a * sum_x) / n
+    
+    return a, b
 
-# 创建动画GIF
-def create_animation(X, y, y_pred):
+def main():
+    st.title('交互式線性回歸演示')
+    
+    # 使用列布局來組織參數控制項
+    col1, col2 = st.columns(2)
+    with col1:
+        n_samples = st.slider('樣本數量', 10, 500, 100)
+        noise_level = st.slider('噪聲水平', 0.0, 5.0, 2.0, 0.1)
+    with col2:
+        true_a = st.slider('真實斜率', -5.0, 5.0, 2.5, 0.1)
+        true_b = st.slider('真實截距', -10.0, 10.0, 5.0, 0.1)
+    
+    x, y = generate_data(n_samples, noise_level, true_a, true_b)
+    a, b = linear_regression(x, y)
+    
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.set_xlim(X.min(), X.max())
-    ax.set_ylim(min(y.min(), y_pred.min()), max(y.max(), y_pred.max()))
+    ax.scatter(x, y, color='blue', alpha=0.5, label='數據點')
+    ax.plot(x, a * x + b, color='red', label='擬合線')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
-    ax.set_title('线性回归模型动画')
-
-    scatter = ax.scatter([], [], color='blue', alpha=0.5)
-    line, = ax.plot([], [], color='red', linewidth=2)
-
-    def init():
-        scatter.set_offsets(np.empty((0, 2)))
-        line.set_data([], [])
-        return scatter, line
-
-    def update(frame):
-        scatter.set_offsets(np.column_stack((X[:frame], y[:frame])))
-        line.set_data(X[:frame], y_pred[:frame])
-        return scatter, line
-
-    anim = animation.FuncAnimation(fig, update, frames=len(X), init_func=init, blit=True)
-
-    buffer = io.BytesIO()
-    anim.save(buffer, writer='pillow', fps=30)
-    buffer.seek(0)
+    ax.legend()
+    ax.set_title(f'線性回歸\n擬合: y = {a:.2f}x + {b:.2f}')
     
-    plt.close(fig)
-    return buffer
-
-# 主要的app逻辑
-def main():
-    try:
-        # 参数调整（在图表上方）
-        col1, col2 = st.columns(2)
-        with col1:
-            n_samples = st.slider("样本数量", 10, 500, 100)
-        with col2:
-            noise = st.slider("噪音水平", 0.1, 5.0, 1.0)
-
-        # 生成数据
-        X, y = generate_data(n_samples, noise)
-
-        # 训练模型
-        model = LinearRegression()
-        model.fit(X, y)
-
-        # 预测
-        y_pred = model.predict(X)
-
-        # 计算模型性能指标
-        mse = mean_squared_error(y, y_pred)
-        r2 = r2_score(y, y_pred)
-
-        # 绘制静态图表
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.scatter(X, y, color='blue', alpha=0.5)
-        ax.plot(X, y_pred, color='red', linewidth=2)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_title('线性回归模型')
-
-        # 显示静态图表
-        st.pyplot(fig)
-
-        # 创建和显示动画GIF
-        gif_buffer = create_animation(X, y, y_pred)
-        st.subheader("动画展示：")
-        st.image(gif_buffer, caption="线性回归模型动画", use_column_width=True)
-
-        # 显示模型参数和性能指标
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("模型参数:")
-            st.write(f"斜率 (m): {model.coef_[0][0]:.4f}")
-            st.write(f"截距 (b): {model.intercept_[0]:.4f}")
-        
-        with col2:
-            st.subheader("模型性能:")
-            st.write(f"均方误差 (MSE): {mse:.4f}")
-            st.write(f"决定系数 (R²): {r2:.4f}")
-
-    except Exception as e:
-        st.error(f"发生错误: {str(e)}")
+    st.pyplot(fig)
+    
+    # 使用列布局來顯示參數
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write(f"真實參數: a = {true_a:.2f}, b = {true_b:.2f}")
+    with col2:
+        st.write(f"估計參數: a = {a:.2f}, b = {b:.2f}")
+    
+    # 添加均方誤差（MSE）的計算和顯示
+    mse = np.mean((y - (a * x + b)) ** 2)
+    st.write(f"均方誤差 (MSE): {mse:.4f}")
 
 if __name__ == "__main__":
     main()
