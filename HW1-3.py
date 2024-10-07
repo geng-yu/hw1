@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
+# 設定網頁標題和標題
+st.set_page_config(page_title="作業1-線性迴歸", layout="centered")
+st.title("作業1-線性迴歸")
+
 # 定義更新函數
 def update_model(noise_level, slope, num_samples):
     np.random.seed(0)
@@ -27,8 +31,9 @@ def update_model(noise_level, slope, num_samples):
     st.write(f"Intercept: {model.intercept_[0]}")
 
 # 創建滑桿
-noise_level = st.slider('Noise Level', 0.0, 5.0, 1.0)
-slope = st.slider('Slope', 0.0, 10.0, 3.0)
-num_samples = st.slider('Num Samples', 10, 500, 100)
+st.sidebar.header("調整參數")
+noise_level = st.sidebar.slider('Noise Level', 0.0, 5.0, 1.0)
+slope = st.sidebar.slider('Slope', 0.0, 10.0, 3.0)
+num_samples = st.sidebar.slider('Num Samples', 10, 500, 100)
 
 update_model(noise_level, slope, num_samples)
