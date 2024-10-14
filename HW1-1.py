@@ -11,7 +11,7 @@ def generate_data(slope, noise_scale, num_points):
     return x, y
 
 # Streamlit sliders for parameters
-st.title('Linear Regression with Adjustable Parameters')
+st.title('作業1-線性迴歸')
 slope = st.slider('Slope', 0.0, 10.0, 3.0, 0.1)
 noise_scale = st.slider('Noise Scale', 0.0, 5.0, 1.0, 0.1)
 num_points = st.slider('Number of Points', 10, 200, 100, 1)
